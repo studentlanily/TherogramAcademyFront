@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
-import Login from '../views/Login/login.vue'
+import LoginPage from '../views/Login/LoginPage.vue'
+import RegisterPage from '../views/Login/RegisterPage.vue'
 import AdminLayout from '../views/admin/AdminLayout.vue'
 import CourseManagement from '../views/admin/CourseManagement.vue'
 import CourseDetail from '../views/admin/CourseDetail.vue'
@@ -18,7 +19,15 @@ const routes = [
   {
     path: '/login',
     name: 'Login',
-    component: Login,
+    component: LoginPage,
+    meta: {
+      requiresAuth: false
+    }
+  },
+  {
+    path: '/register',
+    name: 'Register',
+    component: RegisterPage,
     meta: {
       requiresAuth: false
     }
