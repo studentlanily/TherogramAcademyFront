@@ -1,8 +1,10 @@
 <script setup>
+import { HomeFilled, Document, Picture, View, User, DataAnalysis, Search } from '@element-plus/icons-vue'
 import { ref, computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useUserStore } from '../../stores/user'
-import { HomeFilled, Document, Picture, View, User, DataAnalysis } from '@element-plus/icons-vue'
+import { searchCoursePage } from '../../api/course'
+import { searchUserPage } from '../../api/user'
 import CourseManage from './CourseManage.vue'
 import CourseCreate from './CourseCreate.vue'
 import CourseDetail from './CourseDetail.vue'
@@ -16,6 +18,7 @@ import StudentHomeworkDetail from './StudentHomeworkDetail.vue'
 import Statistic from './Statistic.vue'
 import Dashboard from './Dashboard.vue'
 import UserManagement from './UserManagement.vue'
+import { ElMessage } from 'element-plus'
 
 const router = useRouter()
 const route = useRoute()
@@ -23,6 +26,57 @@ const userStore = useUserStore()
 
 const activeMenu = ref('dashboard')
 const showUserManagement = ref(false)
+
+const searchText = ref('')
+const searchLoading = ref(false)
+
+const handleSearch = async () => {
+  if(searchText.value.trim()){
+    searchLoading.value = true
+    try {
+      console.log('搜索内容：',searchText.value)
+      const currentPage = route.name
+      
+      if (currentPage.includes('Course')) {
+        // 搜索课程
+        const response = await searchCoursePage({
+          keywords: searchText.value,
+          page: 1,
+          size: 10
+        })
+        console.log('搜索课程结果:', response)
+        ElMessage.success(`找到 ${response.total || 0} 个课程`)
+      } else if (currentPage.includes('User')) {
+        // 搜索用户
+        const response = await searchUserPage({
+          keywords: searchText.value,
+          page: 1,
+          size: 10
+        })
+        console.log('搜索用户结果:', response)
+        ElMessage.success(`找到 ${response.total || 0} 个用户`)
+      } else if (currentPage.includes('Resource')) {
+        // 资源搜索（暂时使用提示）
+        ElMessage.info('资源搜索功能开发中')
+      } else if (currentPage.includes('Homework')) {
+        // 作业搜索（暂时使用提示）
+        ElMessage.info('作业搜索功能开发中')
+      } else {
+        // 默认搜索所有类型
+        ElMessage.info('请在具体页面中进行搜索')
+      }
+    } catch (error) {
+      console.error('搜索失败:', error)
+      ElMessage.error('搜索失败，请稍后重试')
+    } finally {
+      searchLoading.value = false
+    }
+  }
+}
+
+const clearSearch = () => {
+  searchText.value = ''
+}
 
 const currentComponent = computed(() => {
   const name = route.name
@@ -79,7 +133,25 @@ const handleLogout = () => {
         <div class="logo">
           <img src="../../assets/logo.png" alt="理程学院" />
         </div>
-        <div class="header-title"></div>
+        <div class="header-title">
+        </div>
+      </div>
+      <div class="header-center">
+        <el-input
+          v-model="searchText"
+          placeholder="搜索课程、用户、资源、作业..."
+          class="search-input"
+          clearable
+          @clear="clearSearch"
+          @keyup.enter="handleSearch"
+        >
+          <template #prefix>
+            <el-icon><Search /></el-icon>
+          </template>
+          <template #append>
+            <el-button :loading="searchLoading" @click="handleSearch">搜索</el-button>
+          </template>
+        </el-input>
       </div>
       <div class="header-right">
         <el-button type="primary" @click="handleUser">用户管理</el-button>
@@ -182,6 +254,50 @@ const handleLogout = () => {
   display: flex;
   align-items: center;
   gap: 15px;
+}
+
+.header-center {
+  flex: 1;              /* 弹性占满可用空间 */
+  max-width: 600px;     /* 最大宽度限制，防止过宽 */
+  margin: 0 40px;       /* 左右各40px外边距 */
+}
+
+.search-input {
+  width: 100%;          /* 填满父容器宽度 */
+  border-radius: 20px;  /* 整体圆角（但会被内部覆盖） */
+}
+
+.search-input :deep(.el-input__wrapper) {
+  border-radius: 20px;                    /* 圆角20px */
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1); /* 轻微阴影 */
+  transition: all 0.3s ease;              /* 平滑过渡动画 */
+}
+
+.search-input :deep(.el-input__wrapper:hover) {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15); /* 阴影加深，上浮感 */
+}
+
+.search-input :deep(.el-input__wrapper.is-focus) {
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2); /* 更明显的阴影 */
+}
+
+.search-input :deep(.el-input-group__append) {
+  border-top-right-radius: 20px;      /* 右上圆角 */
+  border-bottom-right-radius: 20px;   /* 右下圆角 */
+  background: #667eea;                /* 渐变紫色背景 */
+  color: white;
+  border: none;                       /* 移除边框 */
+}
+
+.search-input :deep(.el-input-group__append .el-button) {
+  border: none;
+  background: transparent;  /* 透明背景 */
+  color: white;
+  font-weight: 500;         /* 中等字重 */
+}
+
+.search-input :deep(.el-input-group__append .el-button:hover) {
+  background: rgba(255, 255, 255, 0.2); /* 白色半透明悬停效果 */
 }
 
 .header-right .el-button {
